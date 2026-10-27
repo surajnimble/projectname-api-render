@@ -53,7 +53,8 @@
     "e2e:user-vendor": "tsx scripts/e2e-user-vendor.ts",
     "e2e:catalog": "tsx scripts/e2e-catalog.ts",
     "e2e:roles": "tsx scripts/e2e-role-complete.ts",
-    "prepare": "husky"
+    "prepare": "husky",
+    "postinstall": "npm run build"
   },
   "keywords": [
     "api",
