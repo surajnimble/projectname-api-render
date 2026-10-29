@@ -283,11 +283,18 @@ export const createSubAdminSchema = z
 export const updateSubAdminSchema = z
   .object({
     name: z.string().trim().min(2).max(NAME.MAX_LENGTH).optional(),
+    email: z.string().trim().email(VALIDATION.INVALID_EMAIL).optional(),
     phone: phone.optional(),
-    permissions: z.array(z.string().trim().max(60)).max(100).optional(),
   })
   .strict()
   .refine((v) => Object.keys(v).length > 0, { message: VALIDATION.INVALID_JSON });
+
+export const listSubAdminsSchema = z
+  .object({
+    isActive: z.enum(['true', 'false']).optional(),
+  })
+  .merge(paginationSchema)
+  .strict();
 
 export const setPermissionsSchema = z
   .object({

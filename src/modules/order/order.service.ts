@@ -562,6 +562,51 @@ export const listOrders = async (
   return { rows, total };
 };
 
+export const listAllOrders = async (
+  query: Record<string, any>,
+): Promise<{ rows: OrderRow[]; total: number }> => {
+  const where: Prisma.OrderWhereInput = { deletedAt: null };
+
+  if (D.str(query.userId)) where.userId = D.str(query.userId);
+  if (D.str(query.status)) where.status = query.status as OrderStatusType;
+  if (D.str(query.paymentStatus)) where.paymentStatus = query.paymentStatus as PaymentStatus;
+  if (D.str(query.paymentMethod)) where.paymentMethod = query.paymentMethod as PaymentMethod;
+  if (D.str(query.vendorId)) {
+    where.subOrders = { some: { vendorId: D.str(query.vendorId) } };
+  }
+
+  if (D.str(query.from) || D.str(query.to)) {
+    where.createdAt = {
+      ...(D.str(query.from) ? { gte: new Date(D.str(query.from)) } : {}),
+      ...(D.str(query.to) ? { lte: new Date(D.str(query.to)) } : {}),
+    };
+  }
+
+  if (D.str(query.search)) {
+    const term = D.str(query.search);
+    where.OR = [
+      { orderNumber: { contains: term, mode: 'insensitive' } },
+      { items: { some: { name: { contains: term, mode: 'insensitive' } } } },
+      { user: { name: { contains: term, mode: 'insensitive' } } },
+      { user: { email: { contains: term, mode: 'insensitive' } } },
+      { user: { phone: { contains: term } } },
+    ];
+  }
+
+  const [rows, total] = await Promise.all([
+    prisma.order.findMany({
+      where,
+      include: ORDER_INCLUDE,
+      orderBy: resolveSort(query.sort, 'createdAt'),
+      skip: D.num(query.skip),
+      take: D.num(query.take),
+    }) as Promise<OrderRow[]>,
+    prisma.order.count({ where }),
+  ]);
+
+  return { rows, total };
+};
+
 const resolveSort = (sort: string, fallback: string): Prisma.OrderOrderByWithRelationInput => {
   const raw = D.str(sort);
   if (!raw) return { createdAt: 'desc' };

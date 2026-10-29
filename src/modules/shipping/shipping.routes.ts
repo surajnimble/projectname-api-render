@@ -291,7 +291,7 @@ admin.get(
   authenticate,
   ...controller.guards.admin,
   requirePermission(PERMISSION.SUB_ADMIN_MANAGE),
-  validate({ query: schema.listSettingsSchema }),
+  validate({ query: schema.listSubAdminsSchema }),
   controller.subAdminList,
 );
 

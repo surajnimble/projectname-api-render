@@ -9,6 +9,7 @@ import { D } from '../../utils/defaults';
 import { JWT } from '../../config/jwt.config';
 import { HEADER } from '../../config/app.config';
 import { REGISTER_TYPE, OTP_TYPE } from '../../constants/roles';
+import { getRolePermissions } from '../../middlewares/rbac.middleware';
 import { DeviceContext } from './auth.types';
 import * as authService from './auth.service';
 import {
@@ -24,6 +25,8 @@ import {
   serializeContactChange,
 } from './auth.serializer';
 
+const staffPermissions = async (role: string): Promise<string[]> =>
+  role === 'SUPER_ADMIN' || role === 'SUB_ADMIN' ? getRolePermissions(role) : [];
 /**
  * Device identity arrives as headers rather than in the body, so the tracking
  * middleware has already resolved and truncated every value by the time a
@@ -122,6 +125,7 @@ export const login = asyncHandler(async (req, res) => {
     message: SUCCESS.AUTH.LOGGED_IN,
     result: {
       ...serializeSession(outcome.user, outcome.tokens),
+      permissionList: await staffPermissions(D.str(outcome.user?.role)),
       revokedSessionCount: D.num(outcome.revokedSessionCount),
     },
   });
@@ -212,6 +216,7 @@ export const getMe = asyncHandler(async (req, res) => {
     message: SUCCESS.COMMON.FETCHED,
     result: {
       role: D.str(user.role),
+      permissionList: await staffPermissions(D.str(user.role)),
       userData: serializeAuthUser(user),
       vendorData: user.vendorProfile
         ? {

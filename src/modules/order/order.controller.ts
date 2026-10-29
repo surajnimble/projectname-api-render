@@ -6,6 +6,8 @@ import { ROLES } from '../../constants/roles';
 import { D } from '../../utils/defaults';
 import { getPagination } from '../../utils/pagination';
 import { requireRole } from '../../middlewares/auth.middleware';
+import { requirePermission } from '../../middlewares/rbac.middleware';
+import { PERMISSION } from '../../constants/permissions';
 import * as service from './order.service';
 import {
   serializeOrder,
@@ -25,6 +27,14 @@ const vendorId = (req: Request): string => req.auth!.vendorId;
 
 export const guards = {
   admin: [requireRole(ROLES.SUPER_ADMIN, ROLES.SUB_ADMIN)],
+  adminList: [
+    requireRole(ROLES.SUPER_ADMIN, ROLES.SUB_ADMIN),
+    requirePermission(PERMISSION.ORDER_LIST),
+  ],
+  adminView: [
+    requireRole(ROLES.SUPER_ADMIN, ROLES.SUB_ADMIN),
+    requirePermission(PERMISSION.ORDER_VIEW),
+  ],
   vendor: [requireRole('VENDOR')],
 };
 
@@ -92,6 +102,40 @@ export const placeOrder = asyncHandler(async (req, res) => {
  *       200: { description: Order detail }
  *       404: { description: Not found or not the caller's order }
  */
+export const getAllOrders = asyncHandler(async (req, res) => {
+  const { page, limit, skip, take } = getPagination(req.query as any);
+
+  const { rows, total } = await service.listAllOrders({
+    ...(req.query as any),
+    skip,
+    take,
+  });
+
+  return ApiResponse.paginated(res, {
+    message: SUCCESS.ORDER.FETCHED,
+    result: {
+      itemList: rows.map((order) => ({
+        ...serializeOrderSummary(order),
+        userData: serializeOrder(order).userData,
+      })),
+    },
+    totalRecord: total,
+    currentPage: page,
+    limit,
+  });
+});
+
+export const getOrderDetails = asyncHandler(async (req, res) => {
+  const order = await service.getOrderById(D.str(req.params.id));
+  return ApiResponse.success(res, {
+    message: SUCCESS.ORDER.FETCHED,
+    result: {
+      ...serializeOrder(order),
+      timelineList: D.arr(order.timelines).map(serializeOrderTimeline),
+    },
+  });
+});
+
 export const getById = asyncHandler(async (req, res) => {
   const order = await service.getOrderById(D.str(req.params.id), userId(req));
   return ApiResponse.success(res, {

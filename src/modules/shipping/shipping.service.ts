@@ -1261,6 +1261,15 @@ export const listSubAdmins = async (
   if (D.str(query.isActive) === 'true') where.isActive = true;
   if (D.str(query.isActive) === 'false') where.isActive = false;
 
+  const term = D.str(query.search).trim();
+  if (term) {
+    where.OR = [
+      { name: { contains: term, mode: 'insensitive' } },
+      { email: { contains: term, mode: 'insensitive' } },
+      { phone: { contains: term } },
+    ];
+  }
+
   const [rows, total] = await Promise.all([
     prisma.user.findMany({
       where,
@@ -1281,17 +1290,7 @@ export const listSubAdmins = async (
     prisma.user.count({ where }),
   ]);
 
-  const withPerms = await Promise.all(
-    rows.map(async (u) => {
-      const perms = await prisma.rolePermission.findMany({
-        where: { role: ROLES.SUB_ADMIN, isAllowed: true },
-        select: { permission: true },
-      });
-      return { ...u, permissions: perms.map((p) => p.permission) };
-    }),
-  );
-
-  return { rows: withPerms, total };
+  return { rows, total };
 };
 
 export const setRolePermissions = async (
@@ -1670,6 +1669,14 @@ export const updateSubAdmin = async (
   });
 
   if (!existing) throw AppError.notFound(ERROR.USER.NOT_FOUND);
+
+  if (input.email !== undefined) {
+    const taken = await prisma.user.findFirst({
+      where: { email: D.str(input.email).toLowerCase(), NOT: { id: userId } },
+      select: { id: true },
+    });
+    if (taken) throw AppError.conflict(ERROR.AUTH.EMAIL_EXISTS, ERROR_CODE.EMAIL_EXISTS);
+  }
 
   const row = await prisma.user.update({
     where: { id: userId },

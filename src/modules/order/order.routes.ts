@@ -37,6 +37,22 @@ router.post(
 );
 
 router.get(
+  '/getAllOrders',
+  authenticate,
+  ...controller.guards.adminList,
+  validate({ query: schema.listAllOrdersSchema }),
+  controller.getAllOrders,
+);
+
+router.get(
+  '/getOrderDetails/:id',
+  authenticate,
+  ...controller.guards.adminView,
+  validate({ params: schema.orderIdParamSchema }),
+  controller.getOrderDetails,
+);
+
+router.get(
   '/getById/:id',
   authenticate,
   validate({ params: schema.orderIdParamSchema }),

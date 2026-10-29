@@ -35,6 +35,8 @@ export const listOrdersSchema = z
   .merge(paginationSchema)
   .strict();
 
+export const listAllOrdersSchema = listOrdersSchema.extend({ userId: id.optional() });
+
 export const orderIdParamSchema = z.object({ id });
 
 export const addOrderTagsSchema = z

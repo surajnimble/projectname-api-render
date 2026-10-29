@@ -6,6 +6,8 @@ import { ROLES } from '../../constants/roles';
 import { D } from '../../utils/defaults';
 import { getPagination } from '../../utils/pagination';
 import { requireRole } from '../../middlewares/auth.middleware';
+import { getRolePermissions } from '../../middlewares/rbac.middleware';
+import { PERMISSION_VALUES } from '../../constants/permissions';
 import * as service from './shipping.service';
 import {
   serializeShippingZone,
@@ -599,11 +601,12 @@ export const subAdminToggle = asyncHandler(async (req, res) => {
 });
 
 export const allPermissions = asyncHandler(async (_req, res) => {
-  const result = await service.listAllRolePermissions();
+  const stored = await service.listAllRolePermissions();
+  const roleList = { ...stored, [ROLES.SUB_ADMIN]: await getRolePermissions(ROLES.SUB_ADMIN) };
 
   return ApiResponse.success(res, {
     message: SUCCESS.ADMIN.PERMISSIONS_FETCHED,
-    result: { roleList: result },
+    result: { roleList, permissionList: [...PERMISSION_VALUES] },
   });
 });
 
