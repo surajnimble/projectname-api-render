@@ -35,6 +35,14 @@ export const guards = {
     requireRole(ROLES.SUPER_ADMIN, ROLES.SUB_ADMIN),
     requirePermission(PERMISSION.ORDER_VIEW),
   ],
+  adminStatus: [
+    requireRole(ROLES.SUPER_ADMIN, ROLES.SUB_ADMIN),
+    requirePermission(PERMISSION.ORDER_UPDATE_STATUS),
+  ],
+  adminAssign: [
+    requireRole(ROLES.SUPER_ADMIN, ROLES.SUB_ADMIN),
+    requirePermission(PERMISSION.ORDER_ASSIGN_DELIVERY),
+  ],
   vendor: [requireRole('VENDOR')],
 };
 

@@ -174,7 +174,7 @@ router.get(
 router.patch(
   '/updateStatus/:id',
   authenticate,
-  ...controller.guards.admin,
+  ...controller.guards.adminStatus,
   validate({ params: schema.orderIdParamSchema, body: schema.updateOrderStatusSchema }),
   controller.updateStatus,
 );
@@ -182,7 +182,7 @@ router.patch(
 router.patch(
   '/assignDeliveryBoy/:subOrderId',
   authenticate,
-  ...controller.guards.admin,
+  ...controller.guards.adminAssign,
   validate({ params: schema.subOrderParamSchema, body: schema.assignDeliveryBoySchema }),
   controller.assignDeliveryBoy,
 );
